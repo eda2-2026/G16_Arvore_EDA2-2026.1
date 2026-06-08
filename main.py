@@ -153,12 +153,37 @@ def op_ordenar(g: GerenciadorEncomendas) -> None:
     _exibir(resultado)
 
 
+def op_listar_prioridade(g: GerenciadorEncomendas) -> None:
+    print("\n-- Encomendas por Prioridade --")
+    _exibir(g.listar_por_prioridade())
+
+
+def op_proxima_entrega(g: GerenciadorEncomendas) -> None:
+    print("\n-- Próxima Entrega --")
+    enc = g.proxima_entrega()
+    _exibir([enc] if enc else [])
+
+
+def op_buscar_intervalo(g: GerenciadorEncomendas) -> None:
+    print("\n-- Buscar por Intervalo de Datas --")
+    inicio = _ler_data("  Data inicial (AAAA-MM-DD): ")
+    fim = _ler_data("  Data final (AAAA-MM-DD): ")
+    if data_invalida := (inicio > fim):
+        print("  Data inicial não pode ser depois da data final.")
+        return
+    resultado = g.buscar_por_intervalo_data(inicio, fim)
+    _exibir(resultado)
+
+
 _OPCOES = {
     "1": op_criar,
     "2": op_listar,
     "3": op_atualizar,
     "4": op_remover,
     "5": op_ordenar,
+    "6": op_listar_prioridade,
+    "7": op_proxima_entrega,
+    "8": op_buscar_intervalo,
 }
 
 
@@ -172,6 +197,9 @@ def menu() -> None:
         print("  3. Atualizar encomenda")
         print("  4. Remover encomenda")
         print("  5. Ordenar encomendas")
+        print("  6. Listar por prioridade")
+        print("  7. Próxima entrega (maior prioridade)")
+        print("  8. Buscar por intervalo de datas")
         print("  0. Sair")
         print("=================================")
 
