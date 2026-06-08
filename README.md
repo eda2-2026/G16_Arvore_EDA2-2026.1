@@ -1,14 +1,15 @@
 # Sistema de Encomendas
 
-Trabalho 2 da disciplina de Estruturas de Dados 2 (EDA2 - 2026.1), ministrada pelo Prof. Maurício Serrano — UnB.
+Trabalho 3 da disciplina de Estruturas de Dados 2 (EDA2 - 2026.1), ministrada pelo Prof. Maurício Serrano — UnB.
 
-O projeto implementa um sistema de gerenciamento de encomendas com operações de CRUD e ordenação por diferentes algoritmos.
+Esse trabalho é uma continuação do Trabalho 2 da disciplina, agora implementando uma **Árvore Rubro-Negra** como estrutura de armazenamento principal do sistema de gerenciamento de encomendas.
 
 ## Integrantes
 
 | Nome | Matrícula | GitHub |
 |------|-----------|--------|
 | Caio Sabino | 231026302 | [@caiomsabino](https://github.com/caiomsabino) |
+| João Sapiência | 231026400 | [@JoaoSapiencia](https://github.com/JoaoSapiencia) |
 
 ## Estrutura do Projeto
 
@@ -16,8 +17,11 @@ O projeto implementa um sistema de gerenciamento de encomendas com operações d
 .
 ├── main.py              # Ponto de entrada e menu interativo
 ├── encomenda.py         # Modelo de dados: classe Encomenda
-├── gerenciador.py       # GerenciadorEncomendas: CRUD + ordenação
-├── test.md              # Guia de testes passo a passo
+├── gerenciador.py       # GerenciadorEncomendas: CRUD + ordenação + buscas por árvore
+├── arvore/
+│   ├── __init__.py      # Expõe ArvoreRubroNegra
+│   ├── nodo.py          # Nodo com chave, valor e cor (VERMELHO/PRETO)
+│   └── rubro_negra.py   # Árvore Rubro-Negra genérica (CLRS cap. 13)
 └── algoritmos/
     ├── __init__.py      # Expõe o dicionário ALGORITMOS
     ├── insertion.py     # Insertion Sort
@@ -34,20 +38,43 @@ Cada encomenda cadastrada possui os seguintes atributos:
 
 | Atributo | Descrição |
 |----------|-----------|
+| `id` | Identificador único (chave primária) |
 | `nome` | Nome do produto |
-| `id` | Identificador único |
 | `data_postagem` | Data de postagem |
-| `peso` | Peso do pacote |
+| `peso` | Peso do pacote (kg) |
 | `quantidade` | Quantidade de itens |
-| `prioridade` | Nível de prioridade da entrega |
+| `prioridade` | Nível de prioridade da entrega (1–5) |
+
+### Árvore Rubro-Negra
+
+O sistema utiliza duas instâncias de `ArvoreRubroNegra` mantidas em sincronia:
+
+| Árvore | Chave | Uso |
+|--------|-------|-----|
+| `_arvore_id` | `id` | Busca, atualização e remoção em O(log n) |
+| `_arvore_prioridade` | `prioridade` | Listagem por urgência e próxima entrega em O(log n) |
+
+A `ArvoreRubroNegra` é genérica e aceita qualquer chave comparável (int, float, date, str). Métodos disponíveis:
+
+| Método | Descrição | Complexidade |
+|--------|-----------|--------------|
+| `inserir(chave, valor)` | Insere ou atualiza | O(log n) |
+| `remover(chave)` | Remove pelo chave | O(log n) |
+| `buscar(chave)` | Retorna valor ou None | O(log n) |
+| `minimo()` / `maximo()` | Menor/maior chave | O(log n) |
+| `traversal_inorder()` | Lista ordenada por chave | O(n) |
+| `buscar_intervalo(lo, hi)` | Valores com chave em [lo, hi] | O(log n + k) |
 
 ### Operações disponíveis
 
-- **Criar** — cadastrar nova encomenda
-- **Listar** — exibir todas as encomendas
-- **Atualizar** — editar atributos de uma encomenda existente
-- **Remover** — excluir uma encomenda pelo ID
-- **Ordenar** - escolhe um dos atributos disponíveis e escolhe algum dos algoritmos possíveis
+- **Criar** — cadastra nova encomenda (inserção em ambas as árvores)
+- **Listar** — exibe todas as encomendas ordenadas por ID (in-order na `_arvore_id`)
+- **Atualizar** — edita atributos de uma encomenda existente
+- **Remover** — remove em O(log n) por ID
+- **Ordenar** — ordena por qualquer atributo usando os algoritmos clássicos
+- **Buscar por intervalo de datas** — retorna encomendas postadas entre duas datas
+- **Listar por prioridade** — exibe encomendas da mais urgente à menos urgente
+- **Próxima entrega** — retorna a encomenda de maior prioridade em O(log n)
 
 ### Algoritmos de ordenação
 
@@ -73,7 +100,7 @@ As encomendas podem ser ordenadas por qualquer atributo usando os algoritmos aba
 ```bash
 # Clone o repositório
 git clone <url-do-repositorio>
-cd G16_Ordenacao_EDA2-2026.1
+cd G16_Arvore_EDA2-2026.1
 
 # Execute o sistema
 python main.py
