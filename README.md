@@ -94,14 +94,25 @@ As encomendas podem ser ordenadas por qualquer atributo usando os algoritmos aba
 ## Requisitos
 
 - Python 3.10 ou superior
+- FastAPI
+- Uvicorn
+- Pydantic
 
 ## Como executar
 
+1. Instale as dependências executando o comando:
 ```bash
-# Clone o repositório
-git clone <url-do-repositorio>
-cd G16_Arvore_EDA2-2026.1
-
-# Execute o sistema
-python main.py
+python -m pip install fastapi uvicorn pydantic
 ```
+
+2. Inicialize o servidor local:
+```bash
+python -m uvicorn api:app --reload
+```
+
+3. Abra o arquivo `index.html` no seu navegador favorito para visualizar e interagir com o sistema e a Árvore Rubro-Negra!
+
+## Apresentação do Projeto
+
+Confira o vídeo de apresentação demonstrando o funcionamento interno da Árvore Rubro-Negra e a interface interativa:
+ [Vídeo de Apresentação no YouTube](https://youtu.be/06MbWmKuyyU)
