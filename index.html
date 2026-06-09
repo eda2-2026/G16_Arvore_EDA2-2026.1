@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Visualizador Árvore Rubro-Negra - Encomendas</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Adicionando D3.js para desenhar a árvore -->
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <style>
         .node circle {
@@ -13,7 +12,7 @@
             stroke-width: 2px;
         }
         .node text {
-            font: 12px sans-serif;
+            font: 16px sans-serif; /* Aumentado para melhor legibilidade */
             fill: white;
             font-weight: bold;
         }
@@ -26,12 +25,11 @@
 </head>
 <body class="bg-gray-100 p-4 md:p-8">
 
-    <div class="max-w-7xl mx-auto bg-white p-6 rounded-xl shadow-lg">
+    <div class="w-full max-w-[98%] mx-auto bg-white p-6 rounded-xl shadow-lg">
         <h1 class="text-3xl font-bold mb-6 text-gray-800 border-b pb-4">Gerenciador de Encomendas (Árvore Rubro-Negra)</h1>
         
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
             
-            <!-- Formulário -->
             <div class="bg-gray-50 p-6 border rounded-lg shadow-sm h-fit">
                 <h2 class="text-xl font-semibold mb-4 text-gray-700">Painel de Controle</h2>
                 <form id="form-cadastro" onsubmit="salvarEncomenda(event)" class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -68,36 +66,44 @@
                 </form>
 
                 <div class="mt-4 flex gap-2">
-                    <button onclick="gerarMassaTeste(10)" class="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 font-bold text-sm w-full">
+                    <button type="button" onclick="gerarMassaTeste(10)" class="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 font-bold text-sm w-full">
                         Gerar 10 Aleatórios
-                    </button>
-                    <button onclick="buscarProxima()" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 font-bold text-sm w-full">
-                        Ver Próxima Entrega
                     </button>
                 </div>
             </div>
 
-            <!-- Tabela -->
-            <div class="overflow-x-auto h-96 overflow-y-auto border rounded-xl">
-                <table class="w-full text-left border-collapse bg-white">
-                    <thead class="sticky top-0 bg-gray-800 text-white">
-                        <tr>
-                            <th class="p-3">ID</th>
-                            <th class="p-3">Produto</th>
-                            <th class="p-3">Data</th>
-                            <th class="p-3">Peso</th>
-                            <th class="p-3 text-center">Qtd</th>
-                            <th class="p-3 text-center">Prio</th>
-                            <th class="p-3 text-center">Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tabela-corpo" class="text-gray-700 text-sm">
-                    </tbody>
-                </table>
+            <div class="flex flex-col gap-4">
+                <div class="bg-green-50 border-2 border-green-500 p-4 rounded-xl shadow-md flex justify-between items-center transition-all" id="quadro-entrega">
+                    <div>
+                        <h3 class="text-xs font-bold text-green-700 uppercase tracking-wider mb-1">Próxima Entrega (Maior Prioridade)</h3>
+                        <p id="txt-proxima-entrega" class="text-lg font-bold text-gray-800">Carregando...</p>
+                        <p id="txt-proxima-detalhes" class="text-sm text-gray-600"></p>
+                    </div>
+                    <button onclick="despacharProxima()" id="btn-despachar" class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 font-extrabold shadow-lg transform active:scale-95 transition-all">
+                        Despachar Pacote
+                    </button>
+                </div>
+
+                <div class="overflow-x-auto h-72 overflow-y-auto border rounded-xl shadow-sm">
+                    <table class="w-full text-left border-collapse bg-white">
+                        <thead class="sticky top-0 bg-gray-800 text-white">
+                            <tr>
+                                <th class="p-3">ID</th>
+                                <th class="p-3">Produto</th>
+                                <th class="p-3">Data</th>
+                                <th class="p-3">Peso</th>
+                                <th class="p-3 text-center">Qtd</th>
+                                <th class="p-3 text-center">Prio</th>
+                                <th class="p-3 text-center">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabela-corpo" class="text-gray-700 text-sm">
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
-        <!-- Div para a Árvore -->
         <div class="mt-8 bg-slate-50 p-4 border rounded-xl shadow-inner">
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-lg font-bold text-slate-700">Visualizador Estrutural</h2>
@@ -106,7 +112,7 @@
                     <option value="prioridade">Árvore por Prioridade</option>
                 </select>
             </div>
-            <div id="tree-container" class="overflow-auto border rounded bg-white w-full h-[600px] flex justify-center items-center">
+            <div id="tree-container" class="overflow-auto border rounded bg-white w-full h-[800px] flex justify-center items-center">
             </div>
         </div>
     </div>
@@ -182,13 +188,47 @@
             carregarTodaInterface();
         }
 
-        async function buscarProxima() {
+        async function atualizarQuadroEntrega() {
             try {
                 const resposta = await fetch('http://localhost:8000/encomendas/proxima');
-                if(!resposta.ok) { alert("Nenhuma encomenda!"); return; }
+                const pNome = document.getElementById('txt-proxima-entrega');
+                const pDetalhes = document.getElementById('txt-proxima-detalhes');
+                const btn = document.getElementById('btn-despachar');
+
+                if(!resposta.ok) { 
+                    pNome.innerText = "Nenhuma encomenda na fila";
+                    pNome.className = "text-lg font-bold text-gray-400";
+                    pDetalhes.innerText = "Sua árvore está vazia.";
+                    btn.disabled = true;
+                    btn.className = "bg-gray-300 text-gray-500 px-6 py-3 rounded-lg font-extrabold shadow-none cursor-not-allowed";
+                    return; 
+                }
+                
                 const enc = await resposta.json();
-                alert(`Próxima Entrega:\nID: ${enc.id} | ${enc.nome}\nPrio: ${enc.prioridade}`);
+                
+                pNome.innerText = `[ID: ${enc.id}] ${enc.nome}`;
+                pNome.className = "text-xl font-extrabold text-gray-800";
+                
+                const corPrio = enc.prioridade >= 4 ? 'text-red-600' : 'text-blue-600';
+                pDetalhes.innerHTML = `Prioridade Nível: <span class="font-bold ${corPrio}">${enc.prioridade}</span>`;
+                
+                btn.disabled = false;
+                btn.className = "bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 font-extrabold shadow-lg transform active:scale-95 transition-all";
+                btn.onclick = () => despacharProxima(enc.id);
+                
             } catch(e) { }
+        }
+
+        async function despacharProxima(id) {
+            try {
+                await fetch(`http://localhost:8000/encomendas/${id}`, { method: 'DELETE' });
+                document.getElementById('quadro-entrega').classList.add('bg-green-100');
+                setTimeout(() => document.getElementById('quadro-entrega').classList.remove('bg-green-100'), 200);
+                
+                carregarTodaInterface();
+            } catch (error) {
+                alert("Erro ao despachar a encomenda.");
+            }
         }
 
         // ====== Código D3.js para desenhar a Árvore ======
@@ -206,10 +246,10 @@
                     return;
                 }
 
-                // Configurações do SVG
-                const width = Math.max(900, container.clientWidth);
-                const height = 600;
-                const margin = { top: 40, right: 20, bottom: 40, left: 20 };
+                // Configurações dinâmicas do SVG baseadas no container
+                const width = container.clientWidth || 800;
+                const height = 750;
+                const margin = { top: 60, right: 20, bottom: 40, left: 20 };
 
                 // Convertendo para o formato do D3 Hierarchy
                 const root = d3.hierarchy(treeData, d => {
@@ -219,19 +259,20 @@
                     return children;
                 });
 
-                // Layout de Árvore Padrão (Vertical)
-                const treeLayout = d3.tree().size([width - margin.left - margin.right, height - margin.top - margin.bottom]);
+                // Utilizando nodeSize para manter o espaçamento fixo e legível entre nós
+                const treeLayout = d3.tree().nodeSize([85, 100]);
                 treeLayout(root);
 
                 const svg = d3.select("#tree-container").append("svg")
-                    .attr("width", width)
+                    .attr("width", "100%")
                     .attr("height", height)
                     .call(d3.zoom().on("zoom", (event) => {
                         svgG.attr("transform", event.transform);
                     }));
 
+                // Posiciona a raiz no meio horizontal do container
                 const svgG = svg.append("g")
-                    .attr("transform", `translate(${margin.left},${margin.top})`);
+                    .attr("transform", `translate(${width / 2},${margin.top})`);
 
                 // Adiciona links (linhas)
                 svgG.selectAll(".link")
@@ -249,14 +290,14 @@
                     .attr("class", "node")
                     .attr("transform", d => `translate(${d.x},${d.y})`);
 
-                // Círculo com a cor
+                // Círculo com tamanho aumentado (raio de 35px)
                 node.append("circle")
-                    .attr("r", 20)
-                    .style("fill", d => d.data.cor === "vermelho" ? "#ef4444" : "#1f2937"); // tailwind colors
+                    .attr("r", 35)
+                    .style("fill", d => d.data.cor === "vermelho" ? "#ef4444" : "#1f2937");
 
-                // Texto (ID/Chave do nó)
+                // Texto centralizado dentro do círculo maior
                 node.append("text")
-                    .attr("dy", "4")
+                    .attr("dy", "5")
                     .attr("text-anchor", "middle")
                     .text(d => d.data.chave);
 
@@ -267,6 +308,7 @@
 
         function carregarTodaInterface() {
             carregarTabela();
+            atualizarQuadroEntrega();
             desenharArvore();
         }
 
